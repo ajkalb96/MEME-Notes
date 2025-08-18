@@ -1,10 +1,10 @@
-from simulator import WaveSimulator
+from simulator import Simulator
 from operators import *
 
 '''
 Solves the equation u_t + cu_x = 0
 '''
-class OneWayWaveSimulation(WaveSimulator):
+class OneWayWaveSimulator(Simulator):
     def define_space(self, a, b, N):
         super().define_space(a, b, N)
         self.ddx = Derivative(self.dx)
@@ -19,20 +19,20 @@ class OneWayWaveSimulation(WaveSimulator):
         return self.speed * self.ddx.apply(u)
     
 '''
-Solves the equation u_t + uu_x = 0
+Solves the equation u_t + 1/2(u^2)_x = 0
 '''
-class BurgerSimulation(WaveSimulator):
+class BurgerSimulator(Simulator):
     def define_space(self, a, b, N):
         super().define_space(a, b, N)
         self.ddx = Derivative(self.dx) 
 
     def ddt(self, u, t):
-        return -u * self.ddx.apply(u)
+        return -0.5 * self.ddx.apply(u*u)
     
 '''
 Solves the equation u_t = H[u]
 '''
-class HilbertSimulation(WaveSimulator):
+class HilbertSimulator(Simulator):
     def define_space(self, a, b, N):
         super().define_space(a, b, N)
         self.hilbert = HilbertTransform(self.dx)
@@ -43,10 +43,10 @@ class HilbertSimulation(WaveSimulator):
 '''
 Solves the equation iu_t = [-(1/2)d_xx + V(x)] u
 '''
-class SchrodingerSimulation(WaveSimulator):
+class SchrodingerSimulator(Simulator):
     def define_space(self, a, b, N):
         super().define_space(a, b, N)
-        self.dxx = Derivative(self.dx,order = 2)
+        self.dxx = FilteredDerivative(self.dx,order = 2)
 
     def define_potential(self, fun):
         if not hasattr(self, 'x'):
@@ -57,3 +57,33 @@ class SchrodingerSimulation(WaveSimulator):
         if not hasattr(self, 'potential'):
             self.define_potential(lambda x: 0*x)
         return -1j * (-0.5 * self.dxx.apply(u) + self.potential * u)
+    
+'''
+Solves the equation u_t = u_xx
+'''
+class HeatSimulator(Simulator):
+    def define_space(self, a, b, N):
+        super().define_space(a, b, N)
+        self.dxx = Derivative(self.dx, order=2)
+
+    def ddt(self, u, t):
+        return self.dxx.apply(u)
+    
+'''
+Solves the equation u_t = (Du_x)_x
+'''
+class DiffusionSimulator(Simulator):
+    def define_space(self, a, b, N):
+        super().define_space(a, b, N)
+        self.ddx = FilteredDerivative(self.dx)
+
+    def define_diffusion(self, fun):
+        if not hasattr(self, 'x'):
+            raise ValueError("Space not defined. Call define_space first.")
+        self.diffusion : np.ndarray = fun(self.x)
+
+    def ddt(self, u, t):
+        if not hasattr(self, 'diffusion'):
+            self.define_diffusion(lambda x: 1+0*x)
+        u_x = self.ddx.apply(u)
+        return self.ddx.apply(self.diffusion*u_x)

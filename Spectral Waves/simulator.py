@@ -3,7 +3,7 @@ import scipy
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 
-class WaveSimulator(ABC):
+class Simulator(ABC):
 
     def define_space(self,a,b,N):
         self.x = np.linspace(a, b, N, endpoint=False)
@@ -43,10 +43,8 @@ class WaveSimulator(ABC):
         # Interpolate the solution to match self.t
         n = self.initial_condition.size
         interp = lambda x: scipy.interpolate.interp1d(
-            sol.t, 
-            x, 
-            axis=-1,
-            kind='cubic',
+            sol.t, x, 
+            axis=-1, kind='cubic',
             bounds_error=False, 
             fill_value="extrapolate"
             )(self.t)
