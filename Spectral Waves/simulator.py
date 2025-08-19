@@ -25,10 +25,10 @@ class Simulator(ABC):
     def simulate(self):
         if not hasattr(self, 'x'):
             raise ValueError("Space not defined. Call define_space first.")
-        if not hasattr(self, 'initial_condition'):
-            raise ValueError("Initial condition not defined. Call define initial_condition first.")
         if not hasattr(self, 't'):
             raise ValueError("Time not defined. Call define_time first.")
+        if not hasattr(self, 'initial_condition'):
+            raise ValueError("Initial condition not defined. Call define initial_condition first.")
         
         y0_real = np.concatenate([self.initial_condition.real, self.initial_condition.imag])
 

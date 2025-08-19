@@ -87,3 +87,33 @@ class DiffusionSimulator(Simulator):
             self.define_diffusion(lambda x: 1+0*x)
         u_x = self.ddx.apply(u)
         return self.ddx.apply(self.diffusion*u_x)
+    
+'''
+Solves the equation u_t - 6uu_x + u_xxx = 0
+'''
+class KdVSimulator(Simulator):
+    def define_space(self, a, b, N):
+        super().define_space(a, b, N)
+        self.ddx = Derivative(self.dx)
+        self.dxxx = Derivative(self.dx,order=3)
+
+    def ddt(self, u, t):
+        u_xxx = self.dxxx.apply(u)
+        uu_x = u * self.ddx.apply(u)
+        return 6 * uu_x - u_xxx
+    
+'''
+Solves the equation iu_t = -1/2u_xx + ku|u|^2
+'''
+class NLSSimulator(Simulator):
+    def define_space(self, a, b, N):
+        super().define_space(a, b, N)
+        self.dxx = FilteredDerivative(self.dx,order = 2)
+
+    def define_focusing(self, focusing):
+        self.focusing = focusing
+
+    def ddt(self, u, t):
+        if not hasattr(self, 'focusing'):
+            self.focusing = 0
+        return -1j * (-0.5 * self.dxx.apply(u) + self.focusing * np.abs(u)**2 * u)

@@ -31,12 +31,13 @@ class Derivative(FourierOperator):
         return (1j * k) ** self.order
 
 class FilteredDerivative(FourierOperator):
-    def __init__(self, dx, order=1, filter=1.0/3):
+    def __init__(self, dx, order=1, filter=1.0/3, steepness=8):
         super().__init__(dx)
         self.order = order
         self.unfiltered = 1.0 - filter
         self._n_cached = None   # track last n used
         self._op_cached = None  # cached operator
+        self.steepness = steepness
 
     def operator(self, k: np.ndarray) -> np.ndarray:
         n = k.size
@@ -46,8 +47,7 @@ class FilteredDerivative(FourierOperator):
             eta = np.abs(k) / kmax
 
             # exponential spectral filter
-            p = 8  # steepness of filter
-            sigma = np.exp(- (eta / self.unfiltered) ** p)
+            sigma = np.exp(- (eta / self.unfiltered) ** self.steepness)
 
             # cache the operator
             self._op_cached = (1j * k) ** self.order * sigma
